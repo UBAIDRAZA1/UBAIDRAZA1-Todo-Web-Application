@@ -1,13 +1,16 @@
 'use client';
 
+import { ReactNode } from 'react';
+
 interface AuthProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  return (
-    <>
-      {children}
-    </>
-  );
+  // Better-auth automatically handles sessions
+  // No provider needed, just return children
+  return <>{children}</>;
 }
+
+// Export default bhi karo agar zaroorat ho
+export default AuthProvider;

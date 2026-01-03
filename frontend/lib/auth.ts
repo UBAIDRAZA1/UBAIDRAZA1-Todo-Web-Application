@@ -1,12 +1,12 @@
 import { createAuthClient } from "better-auth/react";
 
-// Client-side auth
+// Client-side auth - simple banao
 export const auth = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:8001",
-  fetchOptions: {
-    // Add any additional fetch options if needed
-  }
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "/api/auth",
 });
 
-// Export the auth client
+// Sirf auth export karo
 export default auth;
+
+// useSession directly auth se use karo
+// Example: auth.useSession

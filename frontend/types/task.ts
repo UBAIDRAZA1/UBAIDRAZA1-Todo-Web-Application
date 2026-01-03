@@ -6,6 +6,7 @@ export interface Task {
   user_id: string;
   created_at: string;
   updated_at: string;
+  completed_at?: string;
 }
 
 export interface TaskCreate {

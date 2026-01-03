@@ -1,20 +1,23 @@
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
-import os
+from sqlalchemy import Index
 
 
 class TaskBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: Optional[str] = Field(default=None, max_length=1000)
-    completed: bool = Field(default=False)
+    title: str
+    description: Optional[str] = None
+    completed: bool = False
 
 
 class Task(TaskBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: str = Field(index=True)  # This will reference the user ID from Better Auth
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})  # ← FIXED: autoincrement + int
+    user_id: str = Field(index=True)   # user.id is STRING (uuid)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    completed_at: Optional[datetime] = Field(default=None, index=True)
+
+    __table_args__ = (Index('idx_user_completed', 'user_id', 'completed'),)
 
 
 class TaskCreate(TaskBase):
@@ -22,9 +25,9 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(SQLModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    description: Optional[str] = Field(default=None, max_length=1000)
-    completed: Optional[bool] = Field(default=None)
+    title: Optional[str] = None
+    description: Optional[str] = None
+    completed: Optional[bool] = None
 
 
 class TaskPublic(TaskBase):
@@ -32,9 +35,4 @@ class TaskPublic(TaskBase):
     user_id: str
     created_at: datetime
     updated_at: datetime
-
-
-# Database setup
-def get_engine():
-    from config.settings import settings
-    return create_engine(settings.DATABASE_URL)
+    completed_at: Optional[datetime] = None

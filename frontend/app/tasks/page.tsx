@@ -1,50 +1,53 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { TaskFilters } from '@/components/TaskFilters';
-import { TaskCard } from '@/components/TaskCard';
-import { AddTaskDialog } from '@/components/AddTaskDialog';
-import { Icons } from '@/components/icons';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { TaskFilters } from "@/components/TaskFilters";
+import { TaskCard } from "@/components/TaskCard";
+import { AddTaskDialog } from "@/components/AddTaskDialog";
+import { Icons } from "@/components/icons";
 
 interface Task {
   id: number;
   title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high';
-  dueDate: string;
-  tags: string[];
+  description?: string;
+  priority?: "low" | "medium" | "high";
+  dueDate?: string;
+  tags?: string[];
   completed: boolean;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
 }
 
-// Mock data for tasks
+// Mock data
 const mockTasks: Task[] = [
   {
     id: 1,
-    title: 'Complete project proposal',
-    description: 'Finish the proposal document for the new client project',
-    priority: 'high',
-    dueDate: '2023-06-15',
-    tags: ['work', 'important'],
+    title: "Complete project proposal",
+    description: "Finish the proposal document for the new client project",
+    priority: "high",
+    dueDate: "2023-06-15",
+    tags: ["work", "important"],
     completed: false,
   },
   {
     id: 2,
-    title: 'Buy groceries',
-    description: 'Milk, eggs, bread, fruits, and vegetables',
-    priority: 'medium',
-    dueDate: '2023-06-10',
-    tags: ['personal'],
+    title: "Buy groceries",
+    description: "Milk, eggs, bread, fruits, and vegetables",
+    priority: "medium",
+    dueDate: "2023-06-10",
+    tags: ["personal"],
     completed: true,
   },
   {
     id: 3,
-    title: 'Schedule team meeting',
-    description: 'Coordinate with team members for next week',
-    priority: 'low',
-    dueDate: '2023-06-20',
-    tags: ['work', 'meeting'],
+    title: "Schedule team meeting",
+    description: "Coordinate with team members for next week",
+    priority: "low",
+    dueDate: "2023-06-20",
+    tags: ["work", "meeting"],
     completed: false,
   },
 ];
@@ -52,23 +55,23 @@ const mockTasks: Task[] = [
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleAddTask = (task: { 
-    title: string; 
-    description?: string; 
-    priority: 'low' | 'medium' | 'high'; 
-    dueDate?: string; 
-    tags: string[]; 
+  const handleAddTask = (task: {
+    title: string;
+    description?: string;
+    priority?: "low" | "medium" | "high";
+    dueDate?: string;
+    tags: string[];
   }) => {
     const newTask: Task = {
-      title: task.title,
-      description: task.description || '',
-      priority: task.priority,
-      dueDate: task.dueDate || '',
-      tags: task.tags,
       id: tasks.length + 1,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      tags: task.tags,
       completed: false,
     };
     setTasks([newTask, ...tasks]);
@@ -76,24 +79,27 @@ export default function TasksPage() {
   };
 
   const handleToggleTask = (id: number) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+    );
   };
 
   const handleDeleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id));
+    setTasks(tasks.filter((t) => t.id !== id));
   };
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesFilter = 
-      filter === 'completed' ? task.completed :
-      filter === 'pending' ? !task.completed :
-      true;
-    
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (task.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredTasks = tasks.filter((task) => {
+    const matchesFilter =
+      filter === "completed"
+        ? task.completed
+        : filter === "pending"
+        ? !task.completed
+        : true;
+
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (task.description ?? "").toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesFilter && matchesSearch;
   });
 
@@ -108,20 +114,23 @@ export default function TasksPage() {
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
           >
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tasks</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Tasks
+              </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Manage your tasks efficiently
               </p>
             </div>
+
             <Button onClick={() => setIsAddTaskOpen(true)}>
               <Icons.plus className="mr-2 h-4 w-4" />
               Add Task
             </Button>
           </motion.div>
 
-          <TaskFilters 
-            onFilterChange={setFilter} 
-            filter={filter} 
+          <TaskFilters
+            onFilterChange={setFilter}
+            filter={filter}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
@@ -140,12 +149,13 @@ export default function TasksPage() {
               No tasks found
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {filter === 'completed' 
-                ? 'You have no completed tasks yet.' 
-                : filter === 'pending'
-                ? 'You have no pending tasks. Great job!'
-                : 'Get started by creating a new task.'}
+              {filter === "completed"
+                ? "You have no completed tasks yet."
+                : filter === "pending"
+                ? "You have no pending tasks. Great job!"
+                : "Get started by creating a new task."}
             </p>
+
             <Button onClick={() => setIsAddTaskOpen(true)}>
               <Icons.plus className="mr-2 h-4 w-4" />
               Create Task
@@ -166,7 +176,15 @@ export default function TasksPage() {
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
                 <TaskCard
-                  task={task}
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    description: task.description ?? "",
+                    priority: task.priority ?? "low",
+                    dueDate: task.dueDate,
+                    tags: task.tags ?? [],
+                    completed: task.completed,
+                  }}
                   onToggle={() => handleToggleTask(task.id)}
                   onDelete={() => handleDeleteTask(task.id)}
                 />

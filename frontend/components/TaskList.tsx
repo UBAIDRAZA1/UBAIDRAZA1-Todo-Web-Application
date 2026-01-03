@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback, useEffect } from 'react';
 import { Task } from '@/types/task';
 import { TaskItem } from './TaskItem';
 
@@ -10,7 +11,56 @@ interface TaskListProps {
   onDelete: (id: number) => void;
 }
 
-export function TaskList({ tasks, onToggleComplete, onEdit, onDelete }: TaskListProps) {
+export function TaskList({ tasks: initialTasks, onToggleComplete, onEdit, onDelete }: TaskListProps) {
+  // ✅ FIX: Sync local state with parent props
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+
+  // ✅ FIX: Uncomment this useEffect to sync with parent
+  useEffect(() => {
+    console.log('TaskList: Syncing tasks from parent:', initialTasks.length);
+    setTasks(initialTasks);
+  }, [initialTasks]);
+
+  // Optimistic toggle handler
+  const handleToggle = useCallback(
+    async (id: number, willBeCompleted: boolean) => {
+      const now = new Date().toISOString();
+
+      // 1. Optimistic update (turant UI update)
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                completed: willBeCompleted,
+                completed_at: willBeCompleted ? now : undefined,
+              }
+            : task
+        )
+      );
+
+      try {
+        // 2. Real API call
+        await onToggleComplete(id, willBeCompleted);
+      } catch (error) {
+        console.error('Toggle failed:', error);
+        // 3. Rollback on failure
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.id === id
+              ? {
+                  ...task,
+                  completed: !willBeCompleted,
+                  completed_at: task.completed_at,
+                }
+              : task
+          )
+        );
+      }
+    },
+    [onToggleComplete]
+  );
+
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center animate-fade-in">
@@ -20,9 +70,7 @@ export function TaskList({ tasks, onToggleComplete, onEdit, onDelete }: TaskList
           </svg>
         </div>
         <h2 className="text-xl font-semibold text-foreground mb-2">No tasks yet</h2>
-        <p className="text-muted-foreground max-w-sm">
-          Get started by creating a new task above.
-        </p>
+        <p className="text-muted-foreground max-w-sm">Get started by creating a new task above.</p>
       </div>
     );
   }
@@ -33,22 +81,33 @@ export function TaskList({ tasks, onToggleComplete, onEdit, onDelete }: TaskList
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           Your Tasks
           <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-             {tasks.length}
+            {tasks.length}
           </span>
         </h2>
       </div>
-      
+
       <div className="space-y-3">
-        {tasks.map((task, index) => (
-          <div key={task.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
-            <TaskItem
-              task={task}
-              onToggle={() => onToggleComplete(task.id, !task.completed)}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        ))}
+        {tasks.map((task, index) => {
+          if (!task.id) {
+            console.error('Task without ID found:', task);
+            return null;
+          }
+
+          return (
+            <div
+              key={task.id}
+              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <TaskItem
+                task={task}
+                onToggle={() => handleToggle(task.id!, !task.completed)}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
+          );
+        }).filter(Boolean)}
       </div>
     </div>
   );

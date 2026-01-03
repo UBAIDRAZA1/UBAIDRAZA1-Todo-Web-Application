@@ -36,17 +36,28 @@ export default function TaskDashboard({ userId }: TaskDashboardProps) {
   const handleCreateTask = async (taskData: { title: string; description?: string }) => {
     try {
       const newTask = await createTask(userId, { ...taskData, completed: false });
-      setTasks([...tasks, newTask]);
-      setShowForm(false);
+      // Ensure the new task has a valid ID before adding to state
+      if (newTask && newTask.id) {
+        setTasks([...tasks, newTask]);
+        setShowForm(false);
+      } else {
+        console.error('Created task does not have a valid ID:', newTask);
+      }
     } catch (error) {
       console.error('Error creating task:', error);
     }
   };
 
   const handleUpdateTask = async (taskId: number, taskData: Partial<Task>) => {
+    if (!taskId) {
+      console.error('Task ID is undefined or invalid for update:', taskId);
+      return;
+    }
     try {
       const updatedTask = await updateTask(userId, taskId, taskData);
-      setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+      // Use the original task ID if the response doesn't have one (for backend compatibility)
+      const taskWithId = updatedTask.id ? updatedTask : { ...updatedTask, id: taskId };
+      setTasks(tasks.map(task => task.id === taskId ? taskWithId : task));
       setEditingTask(null);
     } catch (error) {
       console.error('Error updating task:', error);
@@ -54,6 +65,10 @@ export default function TaskDashboard({ userId }: TaskDashboardProps) {
   };
 
   const handleDeleteTask = async (taskId: number) => {
+    if (!taskId) {
+      console.error('Task ID is undefined or invalid for delete:', taskId);
+      return;
+    }
     try {
       await deleteTask(userId, taskId);
       setTasks(tasks.filter(task => task.id !== taskId));
@@ -63,9 +78,15 @@ export default function TaskDashboard({ userId }: TaskDashboardProps) {
   };
 
   const handleToggleComplete = async (taskId: number, completed: boolean) => {
+    if (!taskId) {
+      console.error('Task ID is undefined or invalid:', taskId);
+      return;
+    }
     try {
       const updatedTask = await toggleTaskComplete(userId, taskId, completed);
-      setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+      // Use the original task ID if the response doesn't have one (for backend compatibility)
+      const taskWithId = updatedTask.id ? updatedTask : { ...updatedTask, id: taskId };
+      setTasks(tasks.map(task => task.id === taskId ? taskWithId : task));
     } catch (error) {
       console.error('Error toggling task completion:', error);
     }

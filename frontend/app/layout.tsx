@@ -1,14 +1,14 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from '@/components/AuthProvider';
+import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "react-hot-toast";
+import { BetterAuthProvider } from "@/components/BetterAuth/BetterAuthProvider";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'TaskMaster - Professional Task Management',
-  description: 'A full-stack todo application with authentication',
+  title: "TaskMaster - Professional Task Management",
+  description: "A full-stack todo application with authentication",
 };
 
 export default function RootLayout({
@@ -19,10 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
+        <BetterAuthProvider>
           {children}
           <Toaster position="top-right" />
-        </AuthProvider>
+        </BetterAuthProvider>
       </body>
     </html>
   );

@@ -1,51 +1,98 @@
 import axios from 'axios';
-import { Task, TaskCreate, TaskUpdate, TaskToggleComplete } from '../types/task';
+import { Task, TaskCreate, TaskUpdate } from '../types/task';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Important: This allows cookies to be sent with requests
+  withCredentials: true, // Better Auth ke cookies ke liye
 });
 
-// Better Auth automatically handles session tokens via cookies
-// No need to manually add tokens to headers
+// Development mein requests log karne ke liye
+if (process.env.NODE_ENV !== 'production') {
+  api.interceptors.request.use((config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    return config;
+  });
+}
 
-// API functions for tasks
 export const taskAPI = {
-  // Get all tasks for a user
   getTasks: async (userId: string): Promise<Task[]> => {
-    const response = await api.get(`/api/${userId}/tasks`);
-    return response.data;
+    try {
+      const response = await api.get(`/api/${userId}/tasks`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get tasks:', error);
+      throw error;
+    }
   },
 
-  // Create a new task
   createTask: async (userId: string, taskData: TaskCreate): Promise<Task> => {
-    const response = await api.post(`/api/${userId}/tasks`, taskData);
-    return response.data;
+    try {
+      const response = await api.post(`/api/${userId}/tasks`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
+    }
   },
 
-  // Get a specific task
   getTask: async (userId: string, taskId: number): Promise<Task> => {
-    const response = await api.get(`/api/${userId}/tasks/${taskId}`);
-    return response.data;
+    if (!taskId) {
+      console.error('Task ID is invalid for get task:', taskId);
+      throw new Error('Task ID is required for get task');
+    }
+    try {
+      const response = await api.get(`/api/${userId}/tasks/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get task:', error);
+      throw error;
+    }
   },
 
-  // Update a task
+  // General update (PUT method)
   updateTask: async (userId: string, taskId: number, taskData: TaskUpdate): Promise<Task> => {
-    const response = await api.put(`/api/${userId}/tasks/${taskId}`, taskData);
-    return response.data;
+    if (!taskId) {
+      console.error('Task ID is invalid for update task:', taskId);
+      throw new Error('Task ID is required for update task');
+    }
+    try {
+      const response = await api.put(`/api/${userId}/tasks/${taskId}`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      throw error;
+    }
   },
 
-  // Delete a task
   deleteTask: async (userId: string, taskId: number): Promise<void> => {
-    await api.delete(`/api/${userId}/tasks/${taskId}`);
+    if (!taskId) {
+      console.error('Task ID is invalid for delete task:', taskId);
+      throw new Error('Task ID is required for delete task');
+    }
+    try {
+      await api.delete(`/api/${userId}/tasks/${taskId}`);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      throw error;
+    }
   },
 
-  // Toggle task completion
+  // Toggle task completion – FIXED: PUT method use kiya (backend PUT support karta hai)
   toggleTaskCompletion: async (userId: string, taskId: number, completed: boolean): Promise<Task> => {
-    const response = await api.patch(`/api/${userId}/tasks/${taskId}/complete`, { completed });
-    return response.data;
+    if (!taskId) {
+      console.error('Task ID is invalid for toggle completion:', taskId);
+      throw new Error('Task ID is required for toggle completion');
+    }
+    try {
+      // PUT use kar rahe hain, body mein completed bhej rahe hain (updateTask ke jaise)
+      const response = await api.put(`/api/${userId}/tasks/${taskId}`, { completed });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to toggle task completion:', error.response?.data || error.message);
+      throw error;
+    }
   },
 };
 

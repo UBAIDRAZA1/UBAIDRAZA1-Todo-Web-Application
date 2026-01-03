@@ -1,26 +1,16 @@
 from fastapi import HTTPException, status, Request
-from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 from config.settings import settings
 from typing import Optional
-import logging
 
-logger = logging.getLogger(__name__)
-security = HTTPBearer()
-
-
-def verify_token(token: str) -> Optional[str]:
+def verify_token(token: str) -> str:
     """
     Verify JWT token and return user_id if valid
     """
     try:
-        payload = jwt.decode(
-            token, 
-            settings.JWT_SECRET, 
-            algorithms=[settings.JWT_ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         user_id: str = payload.get("sub")
-        if user_id is None:
+        if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
@@ -34,22 +24,19 @@ def verify_token(token: str) -> Optional[str]:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-
 async def get_current_user_id(request: Request) -> str:
     """
     Get current user ID from JWT token in request
     """
-    from fastapi.security import HTTPAuthorizationCredentials
-    # Get the credentials from the request
-    token = None
-    authorization: str = request.headers.get("Authorization")
+    # Extract token
+    token: Optional[str] = None
+    auth_header = request.headers.get("Authorization")
     
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization[7:]  # Remove "Bearer " prefix
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
     else:
-        # Check cookie
         token = request.cookies.get("better-auth.session_token")
-
+    
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,10 +46,9 @@ async def get_current_user_id(request: Request) -> str:
     
     user_id = verify_token(token)
     
-    # Verify that the user_id in the token matches the user_id in the path
-    # Only if user_id is in the path
+    # Check path user_id matches token user_id (if exists)
     path_user_id = request.path_params.get("user_id")
-    if path_user_id and user_id != path_user_id:
+    if path_user_id and path_user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this resource"
