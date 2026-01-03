@@ -11,7 +11,7 @@ interface AuthFormProps {
 }
 
 const auth = createAuthClient({
-  baseURL: "/api/auth",
+  baseURL: "https://hafizubaid-todo-wep-app.hf.space/api/auth",
 });
 
 export default function AuthForm({ mode }: AuthFormProps) {
