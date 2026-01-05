@@ -21,8 +21,8 @@ const API_BASE_URL = getApiBaseUrl();
 
 console.log('API Base URL:', API_BASE_URL);
 
+// Create an axios instance without the auth interceptor initially
 const api = axios.create({
-  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -38,11 +38,25 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Function to create API calls with proper authentication
+const createAuthenticatedApi = (token: string | null) => {
+  const authenticatedApi = axios.create({
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+    },
+  });
+
+  return authenticatedApi;
+};
+
 export const taskAPI = {
   // ✅ GET all tasks
-  getTasks: async (userId: string): Promise<Task[]> => {
+  getTasks: async (userId: string, token: string | null): Promise<Task[]> => {
     try {
-      const response = await api.get(`/api/${userId}/tasks`);
+      const authenticatedApi = createAuthenticatedApi(token);
+      const response = await authenticatedApi.get(`${API_BASE_URL}/api/${userId}/tasks`);
       return response.data;
     } catch (error: any) {
       console.error('Failed to get tasks:', error.response?.data || error.message);
@@ -51,9 +65,10 @@ export const taskAPI = {
   },
 
   // ✅ CREATE new task
-  createTask: async (userId: string, taskData: TaskCreate): Promise<Task> => {
+  createTask: async (userId: string, taskData: TaskCreate, token: string | null): Promise<Task> => {
     try {
-      const response = await api.post(`/api/${userId}/tasks`, taskData);
+      const authenticatedApi = createAuthenticatedApi(token);
+      const response = await authenticatedApi.post(`${API_BASE_URL}/api/${userId}/tasks`, taskData);
       return response.data;
     } catch (error: any) {
       console.error('Failed to create task:', error.response?.data || error.message);
@@ -62,12 +77,13 @@ export const taskAPI = {
   },
 
   // ✅ GET single task
-  getTask: async (userId: string, taskId: number): Promise<Task> => {
+  getTask: async (userId: string, taskId: number, token: string | null): Promise<Task> => {
     if (!taskId) {
       throw new Error('Task ID is required');
     }
     try {
-      const response = await api.get(`/api/${userId}/tasks/${taskId}`);
+      const authenticatedApi = createAuthenticatedApi(token);
+      const response = await authenticatedApi.get(`${API_BASE_URL}/api/${userId}/tasks/${taskId}`);
       return response.data;
     } catch (error: any) {
       console.error('Failed to get task:', error.response?.data || error.message);
@@ -76,12 +92,13 @@ export const taskAPI = {
   },
 
   // ✅ UPDATE task
-  updateTask: async (userId: string, taskId: number, taskData: TaskUpdate): Promise<Task> => {
+  updateTask: async (userId: string, taskId: number, taskData: TaskUpdate, token: string | null): Promise<Task> => {
     if (!taskId) {
       throw new Error('Task ID is required');
     }
     try {
-      const response = await api.put(`/api/${userId}/tasks/${taskId}`, taskData);
+      const authenticatedApi = createAuthenticatedApi(token);
+      const response = await authenticatedApi.put(`${API_BASE_URL}/api/${userId}/tasks/${taskId}`, taskData);
       return response.data;
     } catch (error: any) {
       console.error('Failed to update task:', error.response?.data || error.message);
@@ -90,12 +107,13 @@ export const taskAPI = {
   },
 
   // ✅ DELETE task
-  deleteTask: async (userId: string, taskId: number): Promise<void> => {
+  deleteTask: async (userId: string, taskId: number, token: string | null): Promise<void> => {
     if (!taskId) {
       throw new Error('Task ID is required');
     }
     try {
-      await api.delete(`/api/${userId}/tasks/${taskId}`);
+      const authenticatedApi = createAuthenticatedApi(token);
+      await authenticatedApi.delete(`${API_BASE_URL}/api/${userId}/tasks/${taskId}`);
     } catch (error: any) {
       console.error('Failed to delete task:', error.response?.data || error.message);
       throw error;
@@ -103,12 +121,13 @@ export const taskAPI = {
   },
 
   // ✅ TOGGLE task completion
-  toggleTaskCompletion: async (userId: string, taskId: number, completed: boolean): Promise<Task> => {
+  toggleTaskCompletion: async (userId: string, taskId: number, completed: boolean, token: string | null): Promise<Task> => {
     if (!taskId) {
       throw new Error('Task ID is required');
     }
     try {
-      const response = await api.patch(`/api/${userId}/tasks/${taskId}/toggle`, {
+      const authenticatedApi = createAuthenticatedApi(token);
+      const response = await authenticatedApi.patch(`${API_BASE_URL}/api/${userId}/tasks/${taskId}/toggle`, {
         completed
       });
       return response.data;

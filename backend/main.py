@@ -25,13 +25,18 @@ app = FastAPI(
     redoc_url=None
 )
 
-# ✅ IMPORTANT: Fix for HTTPS redirect issue
+# ✅ IMPORTANT: Fix for HTTPS redirect issue - only for Hugging Face deployment
 @app.middleware("http")
 async def fix_scheme(request: Request, call_next):
     """
-    Force HTTP scheme to prevent HTTPS redirects
+    Handle proxy headers properly for Hugging Face deployment
     """
-    request.scope["scheme"] = "http"
+    # Check if we're behind a proxy (Hugging Face Spaces)
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    if forwarded_proto:
+        request.scope["scheme"] = forwarded_proto
+    else:
+        request.scope["scheme"] = "http"
     response = await call_next(request)
     return response
 

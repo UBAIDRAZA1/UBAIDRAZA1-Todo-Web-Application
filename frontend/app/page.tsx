@@ -26,7 +26,9 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      const userTasks = await taskAPI.getTasks(session.data.user.id);
+      // Get token from session data
+      const token = session.data.token;
+      const userTasks = await taskAPI.getTasks(session.data.user.id, token);
       setTasks(userTasks ?? []);
       setError(null);
     } catch (err) {
@@ -35,7 +37,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [session.data?.user?.id]);
+  }, [session.data?.user?.id, session.data?.token]);
 
   // Initial load
   useEffect(() => {
@@ -63,7 +65,8 @@ export default function Dashboard() {
     setTasks((prev) => [optimisticTask, ...prev]);
 
     try {
-      const createdTask = await taskAPI.createTask(session.data.user.id, taskData);
+      const token = session.data.token;
+      const createdTask = await taskAPI.createTask(session.data.user.id, taskData, token);
 
       // Replace temp task with real one
       setTasks((prev) =>
@@ -90,7 +93,8 @@ export default function Dashboard() {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
 
     try {
-      await taskAPI.deleteTask(session.data.user.id, taskId);
+      const token = session.data.token;
+      await taskAPI.deleteTask(session.data.user.id, taskId, token);
 
       // Extra safety net (especially for Supabase-like setups)
       setTimeout(fetchTasks, 300);
@@ -116,7 +120,8 @@ export default function Dashboard() {
     );
 
     try {
-      await taskAPI.updateTask(session.data.user.id, taskId, taskData);
+      const token = session.data.token;
+      await taskAPI.updateTask(session.data.user.id, taskId, taskData, token);
       // Background refresh (most reliable for now)
       setTimeout(fetchTasks, 400);
     } catch (err) {
@@ -150,7 +155,8 @@ export default function Dashboard() {
     );
 
     try {
-      await taskAPI.toggleTaskCompletion(session.data.user.id, taskId, completed);
+      const token = session.data.token;
+      await taskAPI.toggleTaskCompletion(session.data.user.id, taskId, completed, token);
       setTimeout(fetchTasks, 300);
     } catch (err) {
       console.error('Toggle failed:', err);

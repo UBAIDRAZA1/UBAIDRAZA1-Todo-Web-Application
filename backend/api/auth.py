@@ -78,7 +78,8 @@ async def sign_up(user_data: UserCreate, response: Response, session: DbSession 
         key="better-auth.session_token",
         value=token,
         httponly=True,
-        samesite="lax",
+        samesite="none",  # Allow cross-site requests
+        secure=False,     # Set to False for HTTP connections
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -114,7 +115,8 @@ async def sign_in(user_data: UserLogin, response: Response, session: DbSession =
         key="better-auth.session_token",
         value=token,
         httponly=True,
-        samesite="lax",
+        samesite="none",  # Allow cross-site requests
+        secure=False,     # Set to False for HTTP connections
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -184,5 +186,9 @@ async def get_current_session(request: Request):
 
 @router.post("/sign-out")
 async def sign_out(response: Response):
-    response.delete_cookie(key="better-auth.session_token")
+    response.delete_cookie(
+        key="better-auth.session_token",
+        samesite="none",
+        secure=False
+    )
     return {"message": "Successfully signed out"}
