@@ -7,13 +7,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Simple Icons component to replace external dependency if needed, or keep if it exists
-import { Icons } from '@/components/icons'; 
+import { Icons } from '@/components/icons';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  emailVerified: boolean;
+}
 
 interface NavbarProps {
-  user?: {
-    name?: string | null;
-    email?: string | null;
-  };
+  user?: User | null;
   onLogout: () => void;
 }
 

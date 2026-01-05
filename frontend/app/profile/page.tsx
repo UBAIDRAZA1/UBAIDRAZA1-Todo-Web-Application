@@ -1,6 +1,6 @@
 'use client';
 
-import { auth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/card';
@@ -9,11 +9,11 @@ import { Label } from '@/components/ui/label';
 
 // Profile page component
 export default function ProfilePage() {
-  const session = auth.useSession();
+  const { session, signOut } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await auth.signOut();
+    await signOut();
     router.push('/auth/login');
     router.refresh();
   };
@@ -57,15 +57,15 @@ export default function ProfilePage() {
                 <div className="relative z-10">
                   <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 p-1 mb-4 shadow-xl group-hover:scale-105 transition-transform duration-300">
                     <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                      <img 
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.data.user.email}`} 
-                        alt="Profile" 
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.data.user?.email || 'user'}`}
+                        alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     </div>
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">{session.data.user.name}</h2>
-                  <p className="text-muted-foreground text-sm">{session.data.user.email}</p>
+                  <h2 className="text-xl font-bold text-foreground">{session.data.user?.name}</h2>
+                  <p className="text-muted-foreground text-sm">{session.data.user?.email}</p>
                   
                   <div className="pt-6">
                     <Button 
@@ -95,21 +95,21 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                       <Label className="text-muted-foreground">Full Name</Label>
                       <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 font-medium">
-                        {session.data.user.name || 'Not set'}
+                        {session.data.user?.name || 'Not set'}
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label className="text-muted-foreground">Email Address</Label>
                       <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 font-medium">
-                        {session.data.user.email}
+                        {session.data.user?.email}
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label className="text-muted-foreground">User ID</Label>
                       <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 font-mono text-sm text-muted-foreground">
-                        {session.data.user.id}
+                        {session.data.user?.id}
                       </div>
                     </div>
 
