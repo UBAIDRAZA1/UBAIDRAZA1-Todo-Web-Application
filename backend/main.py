@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from api.tasks import router as tasks_router
 from api.auth import router as auth_router
 from config.settings import settings
@@ -19,26 +20,39 @@ app = FastAPI(
     title="Todo API",
     description="A full-stack todo application API with authentication",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,  # Hugging Face pe docs disable karo
+    redoc_url=None
 )
 
-# Add CORS middleware
+# ✅ IMPORTANT: Fix for HTTPS redirect issue
+@app.middleware("http")
+async def fix_scheme(request: Request, call_next):
+    """
+    Force HTTP scheme to prevent HTTPS redirects
+    """
+    request.scope["scheme"] = "http"
+    response = await call_next(request)
+    return response
+
+# ✅ TrustedHostMiddleware for proxy
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]  # Allow all hosts for Hugging Face
+)
+
+# ✅ CORS middleware - UPDATED for Hugging Face
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hafizubaid-todo-wep-app.hf.space",  # Deployed frontend
-        "http://localhost:3000",  # Local frontend
-        "http://localhost:8001",  # Local backend
-        "http://localhost:7860",  # Backend self
-        "http://127.0.0.1:3000",  # Alternative local frontend
-        "http://127.0.0.1:3001",  # Alternative local frontend
-        "https://*.hf.space",  # Allow all Hugging Face spaces
+        "*",  # Temporary - all allow
+        # "https://your-frontend.vercel.app",
+        # "http://localhost:3000",
+        # "http://localhost:8001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    # Allow credentials to be included in cross-origin requests
-    allow_origin_regex=r"https://.*\.hf\.space",
 )
 
 # Include API routers
@@ -47,16 +61,35 @@ app.include_router(tasks_router, prefix="/api/{user_id}/tasks")
 
 @app.get("/")
 def read_root():
-    return {"message": "Todo API is running"}
+    return {"message": "Todo API is running on Hugging Face"}
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "environment": "huggingface",
+        "cors_enabled": True
+    }
+
+# ✅ Test endpoint for debugging
+@app.get("/api/test")
+def test_endpoint():
+    return {
+        "message": "API is working",
+        "scheme": "http",
+        "cors": "enabled",
+        "timestamp": "now"
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    import os
     
-    # IMPORTANT: Port environment variable se lelo, default 7860
-    port = int(os.getenv("PORT", "7860"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # ✅ Hugging Face ka fixed port
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=7860,  # Hugging Face ka fixed port
+        proxy_headers=True,  # IMPORTANT for Hugging Face
+        forwarded_allow_ips="*",  # Allow all forwarded IPs
+        log_level="info"
+    )

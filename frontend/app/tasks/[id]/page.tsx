@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { taskAPI } from "@/lib/api";
 import { Task } from "@/types/task";
 import { isValidDate } from "@/lib/utils";
@@ -19,7 +19,7 @@ interface TaskWithOptionalFields extends Task {
 export default function TaskDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const session = auth.useSession();
+  const { session } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
